@@ -16,7 +16,7 @@ Aplicación web para explorar, administrar e importar el inventario de perfumes 
 
 ## Tecnologías
 
-- Frontend: React, TypeScript, Vite, Tailwind CSS y Framer Motion.
+- Frontend: React, TypeScript, Vite, Tailwind CSS y Framer Motion. Tests con Vitest y React Testing Library.
 - Backend: Node.js, Express, PostgreSQL y JWT para autenticación.
 - Chatbot: Python, FastAPI y un modelo LLM local vía Ollama.
 - Contenedores: Docker Compose.
@@ -116,6 +116,20 @@ Consulta la especificación completa en [docs/CSV_IMPORT.md](docs/CSV_IMPORT.md)
 
 ## Verificación
 
+Pruebas del frontend (Vitest + React Testing Library, entorno `jsdom`):
+
+```bash
+npm run test          # modo watch, para desarrollo
+npm run test:run      # una sola pasada, para CI
+npm run test:coverage # una pasada + reporte de cobertura (carpeta coverage/)
+```
+
+Los tests viven junto al componente que prueban, con el nombre `*.test.tsx` (por
+ejemplo `src/components/ui/Button.test.tsx`). La configuración está en el bloque
+`test` de `vite.config.ts`; el setup global (matchers de
+`@testing-library/jest-dom` y limpieza del DOM entre tests) está en
+`src/test/setup.ts`.
+
 Pruebas del backend (validador CSV, pasarela de pago simulada y middleware de autenticación):
 
 ```bash
@@ -129,9 +143,10 @@ Compilación de producción del frontend:
 npm run build
 ```
 
-## Despliegue en Vercel
+## Despliegue
 
-El frontend se publica en Vercel como sitio estático (build de Vite). La configuración del build está en `vercel.json` y la única variable que necesita es `VITE_API_URL` (URL del backend en producción). El paso a paso está en [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).
+- **Frontend (Vercel):** sitio estático (build de Vite). La configuración está en `vercel.json` (incluye el rewrite a `index.html` para que funcione el enrutado del SPA) y necesita `VITE_API_URL` y `VITE_CHATBOT_URL` (URLs del backend y del chatbot en producción). El *root directory* del proyecto en Vercel es `Scrum/Sprint7/luxor-proj`.
+- **Backend + chatbot (Render):** dos servicios Docker y un PostgreSQL administrado. El chatbot usa un proveedor de LLM compatible con OpenAI (Groq) en producción porque Render no puede correr Ollama; se selecciona con `LLM_PROVIDER` (por defecto `ollama` para desarrollo). El blueprint de referencia está en `render.yaml` y el paso a paso en [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md).
 
 ## Rutas principales
 
