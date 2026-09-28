@@ -26,5 +26,20 @@ export default defineConfig({
     // los tests viven al lado del codigo que prueban: src/**/*.test.ts(x).
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     css: false,
+    coverage: {
+      provider: 'v8',
+      // text -> tabla en la terminal; html -> coverage/index.html navegable;
+      // lcov -> coverage/lcov.info, el formato que consumen las herramientas de CI.
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.{test,spec}.{ts,tsx}',
+        'src/test/**',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+        'src/**/*.d.ts',
+      ],
+    },
   },
 })

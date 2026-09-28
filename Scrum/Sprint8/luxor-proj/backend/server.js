@@ -1,4 +1,5 @@
 import express from "express";
+import { pathToFileURL } from "node:url";
 import cors from "cors";
 import dotenv from "dotenv";
 import pool from './db.js';
@@ -897,5 +898,8 @@ app.post("/chatbot/queries", async (req, res) => {
     }
 });
 
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+}
 
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+export default app;
