@@ -29,19 +29,18 @@ export const ProductDetail: FC<ProductDetailProps> = ({
   const { addToCart } = useCart();
 
   return (
-    <Section size="lg" className="py-24">
+    <Section className="pt-0 pb-24">
       <Container>
-        {/* Mobile: imagen a un lado del encabezado (nombre/precio), resto debajo.
-            Desktop: imagen a la izquierda ocupando todo el alto, contenido a la derecha centrado. */}
         <div
           className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] [grid-template-areas:'img_head'_'body_body'] gap-x-5 gap-y-10 items-center
-                     md:grid-cols-2 md:grid-rows-[1fr_auto_auto_1fr] md:[grid-template-areas:'img_.'_'img_head'_'img_body'_'img_.'] md:gap-x-32 md:gap-y-10"
+                    md:grid-cols-2 md:[grid-template-areas:'img_text'] md:gap-32"
         >
+          <div className="contents md:[grid-area:text] md:flex md:flex-col md:gap-10 md:max-w-2xl">
 
           <div className="[grid-area:head] flex flex-col gap-3 md:gap-10 max-w-2xl">
             <span className="text-[10px] md:text-sm tracking-[0.3em] md:tracking-[0.4em] uppercase text-primary-gold font-black">Habibi Exclusive</span>
             <div className="flex flex-col gap-2 md:gap-4">
-              <H1 className="!text-[1.875rem] sm:!text-5xl md:!text-h1 leading-none tracking-tighter uppercase italic break-words">{name}</H1>
+              <H1 className="!text-[1.875rem] sm:!text-5xl md:!text-h1 leading-none tracking-tighter uppercase italic break-words md:break-normal">{name}</H1>
               <span className="text-2xl md:text-4xl font-black tracking-tight text-primary-gold">Q{price}.00</span>
             </div>
           </div>
@@ -72,6 +71,8 @@ export const ProductDetail: FC<ProductDetailProps> = ({
                 AGREGAR AL CARRITO
               </Button>
             </div>
+          </div>
+
           </div>
 
           <div className="[grid-area:img] relative">
