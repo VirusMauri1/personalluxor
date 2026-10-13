@@ -3,6 +3,47 @@ import pool from './db.js';
 import bcrypt from 'bcryptjs';
 
 const SALT_ROUNDS = 12;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// SFTWRKEY-407: crea el administrador con ADMIN_EMAIL y ADMIN_PASSWORD.
+// Si la cuenta ya existe y su contraseña no es la de ADMIN_PASSWORD, se cambia:
+// asi se reemplaza la contraseña vieja que estaba publicada en el repositorio.
+// Sin las variables no se crea ningun administrador (en produccion queda un aviso en el log).
+const seedAdmin = async () => {
+  const email = process.env.ADMIN_EMAIL?.trim();
+  const password = process.env.ADMIN_PASSWORD;
+  const name = process.env.ADMIN_NAME?.trim() || 'Administrador';
+
+  if (!email || !password) {
+    const aviso = 'ADMIN_EMAIL o ADMIN_PASSWORD no estan definidas: no se crea el administrador';
+    if (isProduction) console.warn(`AVISO: ${aviso}.`);
+    else console.log(`Nota: ${aviso} (definirlas en el .env para tener un admin local).`);
+    return;
+  }
+
+  const existing = await pool.query('SELECT id, password FROM users WHERE email = $1', [email]);
+
+  if (existing.rows.length === 0) {
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    await pool.query(
+      'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, 1)',
+      [name, email, hashedPassword]
+    );
+    console.log(`Administrador ${email} creado`);
+    return;
+  }
+
+  const { id, password: storedHash } = existing.rows[0];
+  if (await bcrypt.compare(password, storedHash)) {
+    await pool.query('UPDATE users SET role = 1 WHERE id = $1', [id]);
+    console.log(`Administrador ${email} ya existia`);
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  await pool.query('UPDATE users SET password = $1, role = 1 WHERE id = $2', [hashedPassword, id]);
+  console.log(`Administrador ${email}: contraseña actualizada desde ADMIN_PASSWORD`);
+};
 
 const seedUsers = async () => {
   try {
@@ -324,25 +365,32 @@ const seedUsers = async () => {
     // SOLO USAR PARA REINICIAR EN CASO DE EMERGENCIA
     // await pool.query(`DELETE FROM users;`);
 
-    // SFTWRKEY-140: Insertar usuarios con contraseñas hasheadas
-    const users = [
-      { name: 'Admin Luxor',  email: 'admin@luxor.com',  password: '123456',  role: 1 },
-      { name: 'Juan Pérez',   email: 'juan@luxor.com',   password: 'test123', role: 3 },
-      { name: 'María García', email: 'maria@luxor.com',  password: 'test123', role: 3 },
-      { name: 'Carlos López', email: 'carlos@luxor.com', password: 'test123', role: 3 },
-    ];
+    // SFTWRKEY-407: el administrador sale de ADMIN_EMAIL y ADMIN_PASSWORD, ya no esta fijo aqui.
+    await seedAdmin();
 
-    for (const user of users) {
-      const hashedPassword = await bcrypt.hash(user.password, SALT_ROUNDS);
-      await pool.query(
-        `INSERT INTO users (name, email, password, role)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (email) DO NOTHING`,
-        [user.name, user.email, hashedPassword, user.role]
-      );
+    // SFTWRKEY-140: clientes de prueba con contraseñas hasheadas.
+    // SFTWRKEY-407: solo en desarrollo local, nunca en produccion.
+    if (isProduction) {
+      console.log('Produccion: no se crean los clientes de prueba');
+    } else {
+      const users = [
+        { name: 'Juan Pérez',   email: 'juan@luxor.com',   password: 'test123', role: 3 },
+        { name: 'María García', email: 'maria@luxor.com',  password: 'test123', role: 3 },
+        { name: 'Carlos López', email: 'carlos@luxor.com', password: 'test123', role: 3 },
+      ];
+
+      for (const user of users) {
+        const hashedPassword = await bcrypt.hash(user.password, SALT_ROUNDS);
+        await pool.query(
+          `INSERT INTO users (name, email, password, role)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (email) DO NOTHING`,
+          [user.name, user.email, hashedPassword, user.role]
+        );
+      }
+
+      console.log('Usuarios de prueba insertados');
     }
-
-    console.log('Usuarios de prueba insertados');
 
     const result = await pool.query(`
       SELECT u.id, u.name, u.email, r.nombre AS rol, u.created_at

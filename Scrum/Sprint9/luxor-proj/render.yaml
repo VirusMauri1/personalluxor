@@ -71,6 +71,13 @@ services:
       # panel de render; debe ser el mismo que VITE_GOOGLE_CLIENT_ID en vercel.
       - key: GOOGLE_CLIENT_ID
         sync: false
+      # SFTWRKEY-407: cuenta de administrador que crea seed.js. el correo puede ir
+      # aqui; la contraseña es secreta y se carga a mano en el panel de render.
+      # con ADMIN_EMAIL=admin@luxor.com el seed le cambia la contraseña vieja.
+      - key: ADMIN_EMAIL
+        value: admin@luxor.com
+      - key: ADMIN_PASSWORD
+        sync: false
 
   # ---------- chatbot (fastapi) ----------
   - type: web
