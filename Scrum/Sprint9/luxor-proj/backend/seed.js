@@ -3,6 +3,10 @@ import pool from './db.js';
 import bcrypt from 'bcryptjs';
 const isProduction = process.env.NODE_ENV === 'production';
 
+// SFTWRKEY-407: crea el administrador con ADMIN_EMAIL y ADMIN_PASSWORD.
+// Si la cuenta ya existe y su contraseña no es la de ADMIN_PASSWORD, se cambia:
+// asi se reemplaza la contraseña vieja que estaba publicada en el repositorio.
+// Sin las variables no se crea ningun administrador (en produccion queda un aviso en el log).
 const seedAdmin = async () => {
   const email = process.env.ADMIN_EMAIL?.trim();
   const password = process.env.ADMIN_PASSWORD;
