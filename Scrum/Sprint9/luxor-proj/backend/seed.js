@@ -1,14 +1,8 @@
 // backend/seed.js
 import pool from './db.js';
 import bcrypt from 'bcryptjs';
-
-const SALT_ROUNDS = 12;
 const isProduction = process.env.NODE_ENV === 'production';
 
-// SFTWRKEY-407: crea el administrador con ADMIN_EMAIL y ADMIN_PASSWORD.
-// Si la cuenta ya existe y su contraseña no es la de ADMIN_PASSWORD, se cambia:
-// asi se reemplaza la contraseña vieja que estaba publicada en el repositorio.
-// Sin las variables no se crea ningun administrador (en produccion queda un aviso en el log).
 const seedAdmin = async () => {
   const email = process.env.ADMIN_EMAIL?.trim();
   const password = process.env.ADMIN_PASSWORD;
@@ -44,6 +38,8 @@ const seedAdmin = async () => {
   await pool.query('UPDATE users SET password = $1, role = 1 WHERE id = $2', [hashedPassword, id]);
   console.log(`Administrador ${email}: contraseña actualizada desde ADMIN_PASSWORD`);
 };
+
+const SALT_ROUNDS = 12;
 
 const seedUsers = async () => {
   try {
@@ -364,12 +360,9 @@ const seedUsers = async () => {
 
     // SOLO USAR PARA REINICIAR EN CASO DE EMERGENCIA
     // await pool.query(`DELETE FROM users;`);
-
     // SFTWRKEY-407: el administrador sale de ADMIN_EMAIL y ADMIN_PASSWORD, ya no esta fijo aqui.
     await seedAdmin();
 
-    // SFTWRKEY-140: clientes de prueba con contraseñas hasheadas.
-    // SFTWRKEY-407: solo en desarrollo local, nunca en produccion.
     if (isProduction) {
       console.log('Produccion: no se crean los clientes de prueba');
     } else {

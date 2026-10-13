@@ -39,16 +39,12 @@ services:
       PAYMENT_GATEWAY_API_KEY: ${PAYMENT_GATEWAY_API_KEY:-sandbox_dev_key}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       LOW_STOCK_THRESHOLD: ${LOW_STOCK_THRESHOLD:-3}
+      # SFTWRKEY-428: sin RESEND_API_KEY, el enlace de recuperar contraseña se muestra en pantalla (solo local).
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      PASSWORD_RESET_DEV_LINKS: ${PASSWORD_RESET_DEV_LINKS:-true}
       # Clave compartida con el chatbot para registrar consultas (POST /chatbot/queries).
       CHATBOT_INTERNAL_KEY: ${CHATBOT_INTERNAL_KEY:-dev-chatbot-key-solo-local}
-      # El Dockerfile pone NODE_ENV=production; en local se cambia para que el seed
-      # cree los clientes de prueba (SFTWRKEY-407).
-      NODE_ENV: ${NODE_ENV:-development}
-      # Admin que crea seed.js (SFTWRKEY-407). Sin valor por defecto: si no se definen
-      # en el .env no se crea ningún administrador.
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
-      ADMIN_NAME: ${ADMIN_NAME:-Admin Luxor}
     depends_on:
       db:
         condition: service_healthy

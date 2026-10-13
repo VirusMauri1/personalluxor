@@ -72,9 +72,6 @@ luxor-proj/
    CHATBOT_INTERNAL_KEY=otro_valor_aleatorio_largo
    PAYMENT_GATEWAY_API_KEY=sandbox_dev_key
    PERFUM_API_BASE_URL=https://perfumapidatabase.onrender.com
-   # administrador que crea seed.js; sin estas dos variables no se crea ninguno
-   ADMIN_EMAIL=admin@luxor.com
-   ADMIN_PASSWORD=una_clave_larga_solo_para_local
    ```
 
    `.env.example` documenta el resto (Google, umbrales de alertas, proveedor del LLM).
@@ -85,7 +82,7 @@ luxor-proj/
    docker compose up --build
    ```
 
-3. Abre `http://localhost:5173`. El backend queda en `http://localhost:3000`, el chatbot en `http://localhost:8000` y PostgreSQL en el puerto `5433` del equipo. Al iniciar, el backend ejecuta `seed.js`, que crea las tablas, el catálogo inicial, el administrador (con `ADMIN_EMAIL` y `ADMIN_PASSWORD`) y, solo fuera de producción, los clientes de prueba.
+3. Abre `http://localhost:5173`. El backend queda en `http://localhost:3000`, el chatbot en `http://localhost:8000` y PostgreSQL en el puerto `5433` del equipo. Al iniciar, el backend ejecuta `seed.js`, que crea las tablas y el catálogo inicial.
 
 Para el chatbot en local se necesita [Ollama](https://ollama.com) en el equipo anfitrión:
 

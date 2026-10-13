@@ -9,7 +9,7 @@ import app from '../server.js';
 
 export { pool };
 
-// Credenciales del administrador que crea seed.js (SFTWRKEY-407: salen de env.js).
+// Credenciales del administrador que crea seed.js 
 export const SEED_ADMIN = { email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD };
 
 // Tarjetas de prueba de la pasarela simulada (services/paymentGateway.js).
