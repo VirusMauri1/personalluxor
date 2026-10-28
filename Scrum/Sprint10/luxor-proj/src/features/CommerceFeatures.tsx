@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { API_URL, authHeaders, friendlyError } from '../services/apiClient';
+import { API_URL, friendlyError } from '../services/apiClient';
 import { PaymentForm } from '../validation/PaymentForm';
 import type { PaymentFormState } from '../validation/usePaymentForm';
 import { MainLayout } from '../components/layout/MainLayout';
 import { formatPrice } from "../utils/formatPrice";
+import { shippingFor, shippingLabel, useShippingOptions, type DeliveryMethod } from "../utils/shipping";
 
 const panel =
   'mx-auto max-w-3xl rounded-xl border border-yellow-700 bg-stone-950 p-6 text-white';
@@ -170,7 +171,6 @@ export function GoogleAccess({
 
                   headers: {
                     'Content-Type': 'application/json',
-                    ...(linkMode ? authHeaders() : {}),
                   },
 
                   body: JSON.stringify({
@@ -199,7 +199,7 @@ export function GoogleAccess({
                   password.current.value = '';
                 }
               } else {
-                loginRef.current(data.user, data.token);
+                loginRef.current(data.user);
               }
             } catch (error) {
               if (!cancelled) {
@@ -340,7 +340,6 @@ function AdminAlerts() {
     async function update() {
       try {
         const next = await fetch(`${API_URL}/admin/alerts`, {
-          headers: authHeaders(),
           signal: controller.signal,
         }).then(jsonResponse);
 
@@ -377,7 +376,6 @@ function AdminAlerts() {
 
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders(),
         },
 
         body: JSON.stringify({
@@ -500,6 +498,9 @@ type Quote = {
 // Al volver, /pago/resultado muestra el comprobante (PaymentResultPage.tsx).
 export function GuestCheckoutPage() {
   const { cart } = useCart();
+  // SFTWRKEY-449: envío a domicilio o recoger en tienda
+  const shippingOptions = useShippingOptions();
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('envio');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -573,6 +574,7 @@ export function GuestCheckoutPage() {
       Math.round(item.price * 100) * item.quantity,
     0,
   );
+  const shipping = shippingFor(cents / 100, deliveryMethod, shippingOptions);
 
   async function pay(address: PaymentFormState) {
     if (sending.current) return;
@@ -692,8 +694,13 @@ export function GuestCheckoutPage() {
                     ))}
                   </ul>
 
-                  <p className="my-4 font-bold">
-                    Total: {formatPrice(cents / 100)}
+                  {/* SFTWRKEY-449: el envío depende de la forma de entrega; el servidor lo vuelve a calcular */}
+                  <p className="mt-4">
+                    {deliveryMethod === 'recoger' ? 'Recoger en tienda' : 'Envío'}: {shippingLabel(shipping)}
+                  </p>
+
+                  <p className="mb-4 font-bold">
+                    Total: {formatPrice(cents / 100 + shipping)}
                   </p>
 
                   <fieldset
@@ -732,6 +739,8 @@ export function GuestCheckoutPage() {
                     <PaymentForm
                       isProcessing={busy}
                       onValidSubmit={pay}
+                      onDeliveryMethodChange={setDeliveryMethod}
+                      stores={shippingOptions.stores}
                     />
                   </fieldset>
                 </>

@@ -1,4 +1,5 @@
-import { API_URL, authHeaders } from "./apiClient";
+import { API_URL } from "./apiClient";
+import type { Delivery } from "../utils/shipping";
 
 export interface OrderConfirmation {
     order: {
@@ -13,6 +14,9 @@ export interface OrderConfirmation {
         unit_price: number;
         subtotal: number;
         }[];
+        // SFTWRKEY-449: envío y forma de entrega
+        shipping: number;
+        delivery: Delivery | null;
     };
     payment: {
         brand: string | null;
@@ -27,7 +31,6 @@ export interface OrderConfirmation {
     const res = await fetch(
         `${API_URL}/orders/${encodeURIComponent(id)}/confirmation`,
         {
-        headers: authHeaders(),
         cache: "no-store",
         signal,
         }

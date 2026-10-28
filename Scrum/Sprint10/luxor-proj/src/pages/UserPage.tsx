@@ -4,11 +4,14 @@ import { MainLayout } from "../components/layout/MainLayout";
 import { Container } from "../components/ui/Container";
 import { H2, PageTitle, Text } from "../components/ui/Typography";
 import { useAuth } from "../context/AuthContext";
-import { API_URL, authHeaders, getToken } from "../services/apiClient";
+import { API_URL } from "../services/apiClient";
 import { PageMeta } from "../components/seo/PageMeta";
 import { statusLabel, statusStyle } from "../constants/orderStatus";
 import { formatPrice } from "../utils/formatPrice";
+import { describeDelivery, shippingLabel, type Delivery } from "../utils/shipping";
 import { validatePassword } from "../validation/passwordPolicy";
+import { fetchMyReviews, type MyReview } from "../services/reviewService";
+import { OrderItemReview } from "../features/reviews/OrderItemReview";
 
 interface OrderItem {
   product_id: string;
@@ -32,6 +35,9 @@ interface Order {
   created_at: string;
   items: OrderItem[];
   history: OrderHistory[];
+  // SFTWRKEY-449: envío y forma de entrega (null en pedidos anteriores)
+  shipping?: number;
+  delivery?: Delivery | null;
 }
 
 interface UserInfo {
@@ -70,6 +76,8 @@ export default function UserPage() {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorInfo, setErrorInfo] = useState<string | null>(null);
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
+  // SFTWRKEY-431: reseñas que el cliente ya publicó (para no ofrecer calificar dos veces)
+  const [myReviews, setMyReviews] = useState<MyReview[]>([]);
 
   // SFTWRKEY-324: Qué orden está expandida mostrando el detalle
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
@@ -95,7 +103,7 @@ export default function UserPage() {
   const loadUserInfo = () => {
     if (!user) return;
     setLoadingInfo(true);
-    fetch(`${API_URL}/user/${user.id}`, { headers: authHeaders() })
+    fetch(`${API_URL}/user/${user.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Error al obtener datos del usuario");
         return res.json();
@@ -119,7 +127,7 @@ export default function UserPage() {
     loadUserInfo();
 
     // SFTWRKEY-323: Historial real de pedidos (orders + order_items)
-    fetch(`${API_URL}/user/${user.id}/orders`, { headers: authHeaders() })
+    fetch(`${API_URL}/user/${user.id}/orders`)
       .then((res) => {
         if (!res.ok) throw new Error("Error al obtener historial");
         return res.json();
@@ -130,6 +138,11 @@ export default function UserPage() {
       })
       .catch(() => setErrorOrders("Error de conexión al obtener historial."))
       .finally(() => setLoadingOrders(false));
+
+    // SFTWRKEY-431: si falla, el botón "Calificar" sigue apareciendo y el backend responde que ya se calificó
+    fetchMyReviews(user.id)
+      .then(setMyReviews)
+      .catch(() => setMyReviews([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
@@ -160,7 +173,7 @@ export default function UserPage() {
     try {
       const res = await fetch(`${API_URL}/user/${user.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: editName, email: editEmail }),
       });
       const data = await res.json();
@@ -170,8 +183,7 @@ export default function UserPage() {
       }
       setUserInfo(data.user);
       // Actualiza también la sesión (para que el nombre se refleje en toda la app)
-      const token = getToken();
-      if (token) login({ ...user, name: data.user.name, email: data.user.email }, token);
+      login({ ...user, name: data.user.name, email: data.user.email });
       setInfoMessage({ type: "success", text: "Información actualizada correctamente." });
       setIsEditingInfo(false);
     } catch {
@@ -201,7 +213,7 @@ export default function UserPage() {
     try {
       const res = await fetch(`${API_URL}/user/${user.id}/password`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const data = await res.json();
@@ -517,22 +529,45 @@ export default function UserPage() {
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-gold">Productos</span>
                             <ul className="flex flex-col divide-y divide-white/5">
                               {order.items.map((item, i) => (
-                                <li key={`${item.product_id}-${i}`} className="flex items-center gap-4 py-3">
-                                  <div className="w-12 h-12 shrink-0 rounded-xl bg-primary-black/40 border border-white/5 overflow-hidden">
-                                    {item.image && <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />}
+                                <li key={`${item.product_id}-${i}`} className="flex flex-col gap-3 py-3">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 shrink-0 rounded-xl bg-primary-black/40 border border-white/5 overflow-hidden">
+                                      {item.image && <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm text-primary-champagne truncate">{item.name}</p>
+                                      <p className="text-xs text-primary-champagne/50">
+                                        {item.quantity} × {formatPrice(item.unit_price)}
+                                      </p>
+                                    </div>
+                                    <span className="text-sm text-primary-champagne/80 whitespace-nowrap">
+                                      {formatPrice(Number(item.unit_price) * item.quantity)}
+                                    </span>
                                   </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-primary-champagne truncate">{item.name}</p>
-                                    <p className="text-xs text-primary-champagne/50">
-                                      {item.quantity} × {formatPrice(item.unit_price)}
-                                    </p>
-                                  </div>
-                                  <span className="text-sm text-primary-champagne/80 whitespace-nowrap">
-                                    {formatPrice(Number(item.unit_price) * item.quantity)}
-                                  </span>
+                                  {/* SFTWRKEY-431: solo se califica lo que ya se entregó. Si el pedido trae el
+                                      mismo perfume en dos renglones, se ofrece en el primero */}
+                                  {order.status === "entregado" &&
+                                    order.items.findIndex((other) => other.product_id === item.product_id) === i && (
+                                    <OrderItemReview
+                                      orderId={order.id}
+                                      productId={item.product_id}
+                                      productName={item.name}
+                                      review={myReviews.find((r) => r.order_id === order.id && r.product_id === item.product_id)}
+                                      onCreated={(review) => setMyReviews((prev) => [review, ...prev])}
+                                    />
+                                  )}
                                 </li>
                               ))}
                             </ul>
+                            {order.delivery && (
+                              <div className="flex flex-col gap-1 border-t border-white/10 pt-3 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-primary-champagne/60">{order.delivery.method === "recoger" ? "Recoger en tienda" : "Envío"}</span>
+                                  <span className="text-primary-champagne/80">{shippingLabel(order.shipping ?? 0)}</span>
+                                </div>
+                                <p className="text-xs text-primary-champagne/50">{describeDelivery(order.delivery)}</p>
+                              </div>
+                            )}
                             <div className="flex justify-between border-t border-white/10 pt-3">
                               <span className="text-xs uppercase tracking-widest text-primary-champagne/60">Total</span>
                               <span className="font-bold text-primary-gold">{formatPrice(order.total)}</span>

@@ -1,5 +1,6 @@
 // SFTWRKEY-419: pedidos del panel de admin
-import { API_URL, authHeaders } from "./apiClient";
+import { API_URL } from "./apiClient";
+import type { Delivery } from "../utils/shipping";
 
 export type AdminOrder = {
     id: number;
@@ -13,7 +14,9 @@ export type AdminOrder = {
 };
 
 export type AdminOrderDetail = Omit<AdminOrder, "items_count"> & {
-    guest_address: { billingAddress: string; city: string; postalCode: string; country: string } | null;
+    // SFTWRKEY-449: a dónde se entrega (o en qué local se recoge) y cuánto fue el envío
+    shipping: number;
+    delivery: Delivery | null;
     items: {
         product_id: string;
         name: string;
@@ -40,7 +43,7 @@ export type OrderFilters = {
 };
 
 async function getJson(path: string, errorMessage: string, init?: RequestInit) {
-    const res = await fetch(`${API_URL}${path}`, { ...init, headers: { ...authHeaders(), ...init?.headers } });
+    const res = await fetch(`${API_URL}${path}`, init);
     const body = await res.json().catch(() => null);
     if (!res.ok) {
         throw new Error(body?.message || errorMessage);
