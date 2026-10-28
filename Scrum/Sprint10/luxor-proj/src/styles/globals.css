@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Abogia';
+  src: url('/fonts/Abogia-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --color-noir: #1A1614;
+    --color-sand: #FDFCFB;
+    --color-gold: #D4AF37;
+    --color-amber: #9B673C;
+    --font-heading: 'Bodoni Moda', serif;
+    --font-body: 'Cormorant Garamond', serif;
+    --font-brand: 'Abogia', serif;
+  }
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+
+/* Floating Social Icons */
+.floating-social {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 100;
+}
+
+.social-bubble {
+  @apply w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary-black/90 backdrop-blur-2xl border border-white/5 flex items-center justify-center text-primary-gold shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-700 hover:scale-110 hover:bg-primary-gold hover:text-primary-black hover:border-transparent;
+}
+
+/* Redesigned Typography */
+h1, h2, h3 {
+  @apply font-heading uppercase font-normal;
+}
+
+p, span, li {
+  @apply font-body;
+}
+
+/* Hide scrollbar but keep functionality */
+html {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+html::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-primary-black text-primary-champagne font-body antialiased;
+  overflow-x: hidden;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+  @apply font-heading font-extrabold uppercase tracking-tight;
+}
+
+a {
+  @apply transition-all duration-300;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+/* Modern Card Effect */
+.glass-card {
+  @apply bg-secondary-charcoal/40 backdrop-blur-2xl border border-white/[0.05] rounded-card shadow-2xl;
+}
+
+/* Immersive Background */
+.cinematic-overlay {
+  background: radial-gradient(circle at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.85) 100%);
+}
+/* Respuestas del chatbot en Markdown (Chatbot.tsx) */
+.chatbot-markdown {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.chatbot-markdown p + p,
+.chatbot-markdown p + ul,
+.chatbot-markdown p + ol,
+.chatbot-markdown ul + p,
+.chatbot-markdown ol + p {
+  margin-top: 0.6rem;
+}
+
+.chatbot-markdown strong,
+.chatbot-markdown h1,
+.chatbot-markdown h2,
+.chatbot-markdown h3,
+.chatbot-markdown a,
+.chatbot-markdown th {
+  color: #D4AF37;
+  font-weight: 700;
+}
+
+.chatbot-markdown h1,
+.chatbot-markdown h2,
+.chatbot-markdown h3 {
+  font-size: 1rem;
+  margin: 0.75rem 0 0.4rem;
+}
+
+.chatbot-markdown ul,
+.chatbot-markdown ol {
+  padding-left: 1.25rem;
+}
+
+.chatbot-markdown ul { list-style-type: disc; }
+.chatbot-markdown ol { list-style-type: decimal; }
+.chatbot-markdown li + li { margin-top: 0.3rem; }
+
+.chatbot-markdown a { text-decoration: underline; }
+
+/* las tablas se desplazan de lado dentro de la burbuja en vez de romper el ancho */
+.chatbot-markdown table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0.6rem 0;
+  font-size: 0.75rem;
+}
+
+.chatbot-markdown th,
+.chatbot-markdown td {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.chatbot-markdown th { background: rgba(212, 175, 55, 0.12); }

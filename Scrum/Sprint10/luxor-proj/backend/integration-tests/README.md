@@ -1,0 +1,32 @@
+# Pruebas de integración y regresión
+
+Corren la API Express real contra una base PostgreSQL real (sin dobles de `pool`).
+
+| Archivo | Tipo | Qué verifica |
+|---|---|---|
+| `auth.integration.js` | Integración | registro/login + bcrypt + JWT + tablas `users`/`rol` |
+| `products.integration.js` | Integración | CRUD de productos del admin + JOIN con `categories` |
+| `cart.integration.js` | Integración | carrito persistido, FK a `products` y ROLLBACK; dos sincronizaciones al mismo tiempo de un cliente sin carrito no fallan (SFTWRKEY-456) |
+| `checkout.integration.js` | Integración | pasarela de pago + `orders`, `order_items`, `payments` y stock |
+| `orders.integration.js` | Integración | el admin lista, filtra y ve el detalle de los pedidos (SFTWRKEY-419), cambia su estado, al cancelar regresa el stock (SFTWRKEY-418) y el cliente ve el estado y su historial (SFTWRKEY-420) |
+| `productImages.integration.js` | Integración | el admin sube una foto, se guarda como WebP y se usa en un producto; el seed pasa las rutas `.png`/`.jpg` viejas a `.webp` (SFTWRKEY-457) |
+| `orderLookup.integration.js` | Integración | el chatbot consulta un pedido con número y correo (cliente con cuenta e invitado); con datos de otra persona responde que no lo encontró (SFTWRKEY-458) |
+| `search.regression.js` | Regresión | la búsqueda oculta agotados, ignora mayúsculas y busca en notas |
+| `checkout-stock.regression.js` | Regresión | sin sobreventa y total calculado con el precio de la base |
+| `access-control.regression.js` | Regresión | un cliente no accede a datos de otros ni a rutas de admin |
+
+## Correr localmente (requiere Docker)
+
+```bash
+npm run test:db:up      # PostgreSQL 16 desechable en el puerto 5434
+npm run test:db:seed    # esquema + datos de seed.js
+npm run test:integration
+npm run test:regression
+npm run test:db:down    # elimina el contenedor
+```
+
+`env.js` fija las variables antes de cargar `db.js`, así que el `.env` local nunca se usa
+en estas pruebas. Cada prueba crea sus propios datos (`it-…`) y los borra al terminar.
+
+En GitHub Actions las corre `.github/workflows/integration-regression.yml` en cada push o
+pull request que toque `Scrum/Sprint10/luxor-proj/backend`.
